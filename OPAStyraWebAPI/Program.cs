@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+
 using OPAStyraWebAPI.Permissions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using OPAStyraWebAPI.Middleware;
+using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,10 +18,30 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(o =>
-{
-    o.DefaultScheme = "TokenAuthenticationScheme";
-}).AddScheme<TokenAuthenticationOptions, TokenAuthenticationHandler>("TokenAuthenticationScheme", null);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+             .AddMicrosoftIdentityWebApi(opt =>
+             {
+                 opt.TokenValidationParameters = new()
+                 {
+                     ValidateIssuer = true,
+                     ValidateAudience = true,
+                     ValidateLifetime = true,
+                     ValidIssuer = "https://login.microsoftonline.com/93c16d38-d1d7-4702-ab62-e9d16603afe5/",
+                     ValidAudience = "api://0ca77bae-04a1-42a1-a1e1-1d28d27d66e0"
+                 };
+             }, opt => {
+                 opt.ClientId = "0ca77bae-04a1-42a1-a1e1-1d28d27d66e0";
+                 opt.TenantId = "93c16d38-d1d7-4702-ab62-e9d16603afe5";
+                 opt.Instance = "https://login.microsoftonline.com";
+             }
+             );
+
+
+
+//builder.Services.AddAuthentication(o =>
+//{
+//    o.DefaultScheme = "TokenAuthenticationScheme";
+//}).AddScheme<TokenAuthenticationOptions, TokenAuthenticationHandler>("TokenAuthenticationScheme", null);
 
 builder.Services.AddAuthorization(o => o.AddPolicy("Customers", b => b.RequireRole("customer")
                                  .AddRequirements(new PermissionRequirement("portfolio", "read"))));
@@ -40,6 +65,7 @@ app.UseCors(policy => policy.AllowAnyMethod()
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<JwtMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
