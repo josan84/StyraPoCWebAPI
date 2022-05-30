@@ -33,7 +33,7 @@ jobs:
         publish-profile: ${{ secrets.PUBLISH_PROFILE }}
         package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
     - name: Run Styra console app
-      run: StyraExecutable/ConsoleHelloStyra.exe
+      run: ./StyraExecutable/ConsoleHelloStyra.exe
     - name: Publish Artifacts
       uses: actions/upload-artifact@v1.0.0
       with:
