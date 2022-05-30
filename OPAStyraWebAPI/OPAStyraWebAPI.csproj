@@ -13,4 +13,17 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="StyraExecutable\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="StyraExecutable\ConsoleHelloStyra.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\ConsoleHelloStyra.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
