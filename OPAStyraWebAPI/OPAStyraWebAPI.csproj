@@ -18,10 +18,37 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="StyraExecutable\ConsoleHelloStyra.deps.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="StyraExecutable\ConsoleHelloStyra.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="StyraExecutable\ConsoleHelloStyra.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\Microsoft.Extensions.DependencyInjection.Abstractions.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\Microsoft.Extensions.DependencyInjection.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\Microsoft.Extensions.Http.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\Microsoft.Extensions.Logging.Abstractions.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\Microsoft.Extensions.Logging.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\Microsoft.Extensions.Options.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="StyraExecutable\Microsoft.Extensions.Primitives.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
