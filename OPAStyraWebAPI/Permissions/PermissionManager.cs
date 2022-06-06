@@ -32,25 +32,27 @@ namespace OPAStyraWebAPI.Permissions
             var payload = JsonSerializer.Serialize(rbacRequest).ToLower();
             var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
 
-            var httpClient = _httpClientFactory.CreateClient("Opa");
+            //var httpClient = _httpClientFactory.CreateClient("Opa");
 
-            var httpResponseMessage = await httpClient.PostAsync("v1/data/rules/allow", httpContent);
+            //var httpResponseMessage = await httpClient.PostAsync("v1/data/rules/allow", httpContent);
 
-            if (httpResponseMessage.IsSuccessStatusCode)
-            {
-                var contentString = await httpResponseMessage.Content.ReadAsStringAsync();
+            //if (httpResponseMessage.IsSuccessStatusCode)
+            //{
+            //    var contentString = await httpResponseMessage.Content.ReadAsStringAsync();
 
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
+            //    var options = new JsonSerializerOptions
+            //    {
+            //        PropertyNameCaseInsensitive = true
+            //    };
 
-                var resp = JsonSerializer.Deserialize<RbacResponse>(contentString, options);
+            //    var resp = JsonSerializer.Deserialize<RbacResponse>(contentString, options);
 
-                return resp.Result;
-            }
+            //    return resp.Result;
+            //}
 
-            return false;
+            //return false;
+
+            return true;
         }
     }
 }

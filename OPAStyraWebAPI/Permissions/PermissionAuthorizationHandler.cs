@@ -14,8 +14,10 @@ namespace OPAStyraWebAPI.Permissions
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, 
             PermissionRequirement requirement)
         {
+            // commenting OPA request
             await _permissionManager.AssertPermissionRequirementAsync(requirement, context.User);
 
+            context.Succeed(requirement);
             return;
         }
     }
