@@ -5,6 +5,7 @@ using OPAStyraWebAPI.Middleware;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,15 +100,36 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-       new WeatherForecast
-       (
-           DateTime.Now.AddDays(index),
-           Random.Shared.Next(-20, 55),
-           summaries[Random.Shared.Next(summaries.Length)]
-       ))
-        .ToArray();
-    return forecast;
+    //var forecast = Enumerable.Range(1, 5).Select(index =>
+    //   new WeatherForecast
+    //   (
+    //       DateTime.Now.AddDays(index),
+    //       Random.Shared.Next(-20, 55),
+    //       summaries[Random.Shared.Next(summaries.Length)]
+    //   ))
+    //    .ToArray();
+    //return forecast;
+
+    var httpClient = new HttpClient();
+    //httpClient.BaseAddress = new Uri("http://localhost:8181/");
+// httpClient.BaseAddress = new Uri("http://opa:8181");
+    httpClient.BaseAddress = new Uri("http://host.docker.internal:8181/");
+
+
+
+var httpContent = new StringContent("", Encoding.UTF8, "application/json");
+
+    try
+    {
+
+        var httpResponseMessage = httpClient.PostAsync("v1/data/rules/allow", httpContent).Result;
+
+        return httpResponseMessage.Content.ReadAsStringAsync().Result;
+    }
+    catch (Exception ex)
+    {
+        return ex.Message;
+    }
 })
 .WithName("GetWeatherForecast");
 

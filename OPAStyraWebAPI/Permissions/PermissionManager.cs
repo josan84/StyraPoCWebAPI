@@ -34,7 +34,16 @@ namespace OPAStyraWebAPI.Permissions
 
             var httpClient = _httpClientFactory.CreateClient("Opa");
 
+            //try
+            //{
+
             var httpResponseMessage = await httpClient.PostAsync("v1/data/rules/allow", httpContent);
+
+            //}
+            //catch(Exception ex)
+            //{
+            //    Console.WriteLine(ex.Message);
+            //}
 
             //if (httpResponseMessage.IsSuccessStatusCode)
             //{
