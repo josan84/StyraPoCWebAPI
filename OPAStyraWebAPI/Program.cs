@@ -7,37 +7,24 @@ using Swashbuckle.AspNetCore.SwaggerUI;
 using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+var services = builder.Services;
+var configuration = builder.Configuration;
 
-builder.Services.AddCors(options =>
+services.AddCors(options =>
                 options.AddDefaultPolicy(policy =>
                         policy.SetIsOriginAllowedToAllowWildcardSubdomains()
                                 .AllowAnyHeader()
                                 .AllowAnyMethod()
                                 .AllowAnyOrigin()
                         ));
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-             .AddMicrosoftIdentityWebApi(opt =>
-             {
-                 opt.TokenValidationParameters = new()
-                 {
-                     ValidateIssuer = true,
-                     ValidateAudience = true,
-                     ValidateLifetime = true,
-                     ValidIssuer = "https://login.microsoftonline.com/93c16d38-d1d7-4702-ab62-e9d16603afe5/",
-                     ValidAudience = "api://0ca77bae-04a1-42a1-a1e1-1d28d27d66e0"
-                 };
-             }, opt => {
-                 opt.ClientId = "0ca77bae-04a1-42a1-a1e1-1d28d27d66e0";
-                 opt.TenantId = "93c16d38-d1d7-4702-ab62-e9d16603afe5";
-                 opt.Instance = "https://login.microsoftonline.com";                 
-             }
-             );
+services.AddEndpointsApiExplorer();
+services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApi(configuration.GetSection("AzureAd"));
 
-builder.Services.AddAuthorization(o => o.AddPolicy("Customers", b => b.RequireRole("customer")
+services.AddAuthorization(o => o.AddPolicy("Customers", b => b.RequireRole("customer")
                                  .AddRequirements(new PermissionRequirement("portfolio", "read"))));
 
-builder.Services.AddSwaggerGen(t =>
+services.AddSwaggerGen(t =>
 {
     t.OperationFilter<SecurityRequirementsOperationFilter>();
 
@@ -50,19 +37,19 @@ builder.Services.AddSwaggerGen(t =>
         {
             AuthorizationCode = new OpenApiOAuthFlow()
             {
-                AuthorizationUrl = new Uri("https://login.microsoftonline.com/93c16d38-d1d7-4702-ab62-e9d16603afe5/oauth2/v2.0/authorize"),
-                TokenUrl = new Uri("https://login.microsoftonline.com/93c16d38-d1d7-4702-ab62-e9d16603afe5/oauth2/v2.0/token"),
+                AuthorizationUrl = new Uri(configuration["AzureAd:AuthorizationUrl"]),
+                TokenUrl = new Uri(configuration["AzureAd:TokenUrl"]),
                 Scopes = new Dictionary<string, string> {
-                    { "api://0ca77bae-04a1-42a1-a1e1-1d28d27d66e0/Portfolios.Read", "desc" }
+                    { configuration["AzureAd:PortfoliosReadScope"], "Allows to read portfolios." }
                 }
             }
         }
     });
 });
 
-builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-builder.Services.AddSingleton<IPermissionManager, PermissionManager>();
-builder.Services.AddHttpClient("Opa", httpClient => httpClient.BaseAddress = new Uri("http://host.docker.internal:8181/")); //http://localhost:8181/
+services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+services.AddSingleton<IPermissionManager, PermissionManager>();
+services.AddHttpClient("Opa", httpClient => httpClient.BaseAddress = new Uri(configuration["OpaUrl"])); //http://localhost:8181/
 
 var app = builder.Build();
 
@@ -73,7 +60,7 @@ app.UseSwaggerUI(c =>
     c.OAuthConfigObject = new OAuthConfigObject
     {
         AppName = "OPA Styra API",
-        ClientId = "0ca77bae-04a1-42a1-a1e1-1d28d27d66e0",
+        ClientId = configuration["AzureAd:ClientId"],
         AdditionalQueryStringParams = new Dictionary<string, string>()
     };
     c.OAuthUsePkce();
