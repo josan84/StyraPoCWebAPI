@@ -62,7 +62,7 @@ builder.Services.AddSwaggerGen(t =>
 
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IPermissionManager, PermissionManager>();
-builder.Services.AddHttpClient("Opa", httpClient => httpClient.BaseAddress = new Uri("http://localhost:8181/"));
+builder.Services.AddHttpClient("Opa", httpClient => httpClient.BaseAddress = new Uri("http://host.docker.internal:8181/")); //http://localhost:8181/
 
 var app = builder.Build();
 
