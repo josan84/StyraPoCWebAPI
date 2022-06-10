@@ -11,13 +11,23 @@ namespace OPAStyraWebAPI.Permissions
             _permissionManager = permissionManager;
         }
 
-        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, 
-            PermissionRequirement requirement)
+        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
         {
-            // commenting OPA request
-            await _permissionManager.AssertPermissionRequirementAsync(requirement, context.User);
+            if (context.User == null)
+            {
+                context.Fail();
+                return;
+            }
 
-            context.Succeed(requirement);
+           var result = await _permissionManager.AssertPermissionRequirementAsync(requirement, context.User);
+
+            if (result)
+            {
+                context.Succeed(requirement);
+                return;
+            }
+
+            context.Fail();
             return;
         }
     }

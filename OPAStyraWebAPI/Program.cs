@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using OPAStyraWebAPI.Permissions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using OPAStyraWebAPI.Middleware;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
-using System.Text;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +13,7 @@ builder.Services.AddCors(options =>
                         policy.SetIsOriginAllowedToAllowWildcardSubdomains()
                                 .AllowAnyHeader()
                                 .AllowAnyMethod()
+                                .AllowAnyOrigin()
                         ));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -34,16 +34,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
              }
              );
 
-builder.Services.AddAuthentication(o =>
-{
-    o.DefaultScheme = "TokenAuthenticationScheme";
-}).AddScheme<TokenAuthenticationOptions, TokenAuthenticationHandler>("TokenAuthenticationScheme", null);
-
-
 builder.Services.AddAuthorization(o => o.AddPolicy("Customers", b => b.RequireRole("customer")
                                  .AddRequirements(new PermissionRequirement("portfolio", "read"))));
+
 builder.Services.AddSwaggerGen(t =>
 {
+    t.OperationFilter<SecurityRequirementsOperationFilter>();
+
     t.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
         Name = "authorization",
@@ -51,7 +48,7 @@ builder.Services.AddSwaggerGen(t =>
         BearerFormat = "JWT",
         Flows = new OpenApiOAuthFlows
         {
-            Implicit = new OpenApiOAuthFlow()
+            AuthorizationCode = new OpenApiOAuthFlow()
             {
                 AuthorizationUrl = new Uri("https://login.microsoftonline.com/93c16d38-d1d7-4702-ab62-e9d16603afe5/oauth2/v2.0/authorize"),
                 TokenUrl = new Uri("https://login.microsoftonline.com/93c16d38-d1d7-4702-ab62-e9d16603afe5/oauth2/v2.0/token"),
@@ -69,8 +66,6 @@ builder.Services.AddHttpClient("Opa", httpClient => httpClient.BaseAddress = new
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -81,67 +76,27 @@ app.UseSwaggerUI(c =>
         ClientId = "0ca77bae-04a1-42a1-a1e1-1d28d27d66e0",
         AdditionalQueryStringParams = new Dictionary<string, string>()
     };
+    c.OAuthUsePkce();
 });
 
 app.UseCors(policy => policy.AllowAnyMethod()
                             .AllowAnyHeader()
                             .SetIsOriginAllowed(origin => true));
-
 app.UseHttpsRedirection();
-
-app.UseMiddleware<JwtMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
-var summaries = new[]
+app.MapGet("/freeportfolios", () =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    //var forecast = Enumerable.Range(1, 5).Select(index =>
-    //   new WeatherForecast
-    //   (
-    //       DateTime.Now.AddDays(index),
-    //       Random.Shared.Next(-20, 55),
-    //       summaries[Random.Shared.Next(summaries.Length)]
-    //   ))
-    //    .ToArray();
-    //return forecast;
-
-    var httpClient = new HttpClient();
-    //httpClient.BaseAddress = new Uri("http://localhost:8181/");
-// httpClient.BaseAddress = new Uri("http://opa:8181");
-    httpClient.BaseAddress = new Uri("http://host.docker.internal:8181/");
-
-
-
-var httpContent = new StringContent("", Encoding.UTF8, "application/json");
-
-    try
-    {
-
-        var httpResponseMessage = httpClient.PostAsync("v1/data/rules/allow", httpContent).Result;
-
-        return httpResponseMessage.Content.ReadAsStringAsync().Result;
-    }
-    catch (Exception ex)
-    {
-        return ex.Message;
-    }
+    // Authorization free portfolios
+    return new[] { "abcde, bcedf, xwxyir" };
 })
-.WithName("GetWeatherForecast");
+.WithName("GetFreePortfolios");
 
 app.MapGet("/portfolios", [Authorize(Policy = "Customers")] () =>
 {
-    return new[] { "Abc, cde, fgt" };
+    return new[] { "ABCDE, BCEDF, XWXYIR" };
 })
 .WithName("GetPortfolios");
 
 app.Run();
-
-internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

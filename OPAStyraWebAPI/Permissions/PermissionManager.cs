@@ -13,15 +13,14 @@ namespace OPAStyraWebAPI.Permissions
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<bool> AssertPermissionRequirementAsync (PermissionRequirement permissionRequirement,
-            ClaimsPrincipal claimsPrincipal)
+        public async Task<bool> AssertPermissionRequirementAsync(PermissionRequirement permissionRequirement, ClaimsPrincipal claimsPrincipal)
         {
             var rbacPermissionRequest = new RbacPermissionRequest
             {
                 Role = claimsPrincipal.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role").Value,
-                User = "pepe", // context.User.Identity?.Name
-                Action = permissionRequirement.Action,
-                Resource = permissionRequirement.Resource
+                User = claimsPrincipal.Identity.Name.ToLower(),
+                Action = permissionRequirement.Action.ToLower(),
+                Resource = permissionRequirement.Resource.ToLower()
             };
 
             var rbacRequest = new RbacRequest
@@ -34,34 +33,22 @@ namespace OPAStyraWebAPI.Permissions
 
             var httpClient = _httpClientFactory.CreateClient("Opa");
 
-            //try
-            //{
-
             var httpResponseMessage = await httpClient.PostAsync("v1/data/rules/allow", httpContent);
 
-            //}
-            //catch(Exception ex)
-            //{
-            //    Console.WriteLine(ex.Message);
-            //}
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                var contentString = await httpResponseMessage.Content.ReadAsStringAsync();
 
-            //if (httpResponseMessage.IsSuccessStatusCode)
-            //{
-            //    var contentString = await httpResponseMessage.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
 
-            //    var options = new JsonSerializerOptions
-            //    {
-            //        PropertyNameCaseInsensitive = true
-            //    };
+                RbacResponse? resp = JsonSerializer.Deserialize<RbacResponse>(contentString, options);
+                return resp == null ? false : resp.Result;
+            }
 
-            //    var resp = JsonSerializer.Deserialize<RbacResponse>(contentString, options);
-
-            //    return resp.Result;
-            //}
-
-            //return false;
-
-            return true;
+            return false;
         }
     }
 }
