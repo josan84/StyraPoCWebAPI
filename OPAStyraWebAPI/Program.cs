@@ -5,6 +5,7 @@ using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Swashbuckle.AspNetCore.Filters;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -49,7 +50,7 @@ services.AddSwaggerGen(t =>
 
 services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 services.AddSingleton<IPermissionManager, PermissionManager>();
-services.AddHttpClient("Opa", httpClient => httpClient.BaseAddress = new Uri(configuration["OpaUrl"])); //http://localhost:8181/
+services.AddHttpClient("Opa", httpClient => httpClient.BaseAddress = new Uri(configuration["OpaUrl"])); //or http://localhost:8181/
 
 var app = builder.Build();
 
@@ -85,5 +86,24 @@ app.MapGet("/portfolios", [Authorize(Policy = "Customers")] () =>
     return new[] { "ABCDE, BCEDF, XWXYIR" };
 })
 .WithName("GetPortfolios");
+
+app.MapGet("/scopes", [Authorize(Policy = "Customers")]
+async () =>
+{
+    var httpClient = new HttpClient();
+    httpClient.BaseAddress = new Uri(configuration["GraphUrl"]);
+    // might need to renew token
+    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configuration["GraphToken"]);
+
+    var httpResponseMessage = await httpClient.GetAsync("v1.0/applications/6a951769-773e-4e92-bb4b-96565b3b5331");
+
+    if (httpResponseMessage.IsSuccessStatusCode)
+    {
+        return new[] { await httpResponseMessage.Content.ReadAsStringAsync() };
+    }
+
+    return new[] { "Unsuccessful call." };
+})
+.WithName("GetScopes");
 
 app.Run();

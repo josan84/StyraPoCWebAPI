@@ -15,10 +15,21 @@ namespace OPAStyraWebAPI.Permissions
 
         public async Task<bool> AssertPermissionRequirementAsync(PermissionRequirement permissionRequirement, ClaimsPrincipal claimsPrincipal)
         {
+            var userName = claimsPrincipal.Identity != null ? claimsPrincipal.Identity.Name : string.Empty;
+
+            var roleClaimUri = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+            var userRole = claimsPrincipal.FindFirstValue(roleClaimUri).ToLower() ?? string.Empty;
+
+            var scopeClaimUri = "http://schemas.microsoft.com/identity/claims/scope";
+            var userScope = claimsPrincipal.FindFirstValue(scopeClaimUri).ToLower() ?? string.Empty;
+
+            // I might not need PermissionRequirement if I can get the scopes from the token; or 
+            // I could just check the permissions from the scope against PermissionRequirement and not needing OPA
+
             var rbacPermissionRequest = new RbacPermissionRequest
             {
-                Role = claimsPrincipal.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role").Value,
-                User = claimsPrincipal.Identity.Name.ToLower(),
+                Role = userRole.ToLower(),
+                User = userName != null ? userName.ToLower() : string.Empty,
                 Action = permissionRequirement.Action.ToLower(),
                 Resource = permissionRequirement.Resource.ToLower()
             };
@@ -33,20 +44,22 @@ namespace OPAStyraWebAPI.Permissions
 
             var httpClient = _httpClientFactory.CreateClient("Opa");
 
-            var httpResponseMessage = await httpClient.PostAsync("v1/data/rules/allow", httpContent);
+            //var httpResponseMessage = await httpClient.PostAsync("v1/data/rules/allow", httpContent);
 
-            if (httpResponseMessage.IsSuccessStatusCode)
-            {
-                var contentString = await httpResponseMessage.Content.ReadAsStringAsync();
+            //if (httpResponseMessage.IsSuccessStatusCode)
+            //{
+            //    var contentString = await httpResponseMessage.Content.ReadAsStringAsync();
 
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
+            //    var options = new JsonSerializerOptions
+            //    {
+            //        PropertyNameCaseInsensitive = true
+            //    };
 
-                RbacResponse? resp = JsonSerializer.Deserialize<RbacResponse>(contentString, options);
-                return resp == null ? false : resp.Result;
-            }
+            //    RbacResponse? resp = JsonSerializer.Deserialize<RbacResponse>(contentString, options);
+            //    return resp == null ? false : resp.Result;
+            //}
+
+            return true;
 
             return false;
         }
